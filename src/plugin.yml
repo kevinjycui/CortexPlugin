@@ -1,0 +1,12 @@
+name: FearPlugin
+version: 1.0
+api-version: 1.16
+author: Junferno
+main: com.junferno.fear.FearPlugin
+description: Plugin for fear
+
+commands:
+  brainplayer:
+    aliases: [bp]
+    description: Manually sets brain player
+    
