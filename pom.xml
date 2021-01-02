@@ -2,11 +2,11 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>FearPlugin</groupId>
-	<artifactId>FearPlugin</artifactId>
+	<groupId>CortexPlugin</groupId>
+	<artifactId>CortexPlugin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Fear plugin</name>
-	<description>Fear plugin Emotiv integration for Minecraft</description>
+	<name>Cortex Plugin</name>
+	<description>Cortex Plugin Brain-computer Interface integration for Minecraft with Cortex API</description>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>

@@ -1,9 +1,10 @@
-package com.junferno.fear.emotiv;
+package com.junferno.cortexplugin.emotiv;
 
 import java.net.URI;
 import java.nio.file.Paths;
 import java.security.cert.X509Certificate;
 
+import javax.management.RuntimeErrorException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -11,6 +12,12 @@ import javax.net.ssl.X509TrustManager;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+class CortexConnectionException extends Exception {
+	public CortexConnectionException(String message) {
+		super(message);
+	}
+}
 
 class CortexSession {
 	private String id;
@@ -31,6 +38,7 @@ public class CortexHandler {
 	private String token = null;
 	private String headsetId = null;
 	private CortexSession session = null;
+	private boolean open = false;
 
 	protected WebSocketEmotivClient client;
 
@@ -80,16 +88,18 @@ public class CortexHandler {
 		// Requesting access from Cortex App (check app for request)
 		System.out.println("Requesting access...");
 		this.requestAccess();
-		while (this.client.loopWaited());
+		while (this.client.loopWaited()) Thread.sleep(1);
 
 		boolean code = true;
 
 		// Querying headsets for headset ID
 		System.out.println("Querying headsets...");
 		this.queryHeadsets();
-		while (this.client.loopWaited());
+		
+		while (this.client.loopWaited()) Thread.sleep(1);
 		if (((JSONArray) this.getResponse().get("result")).size() == 0)
-			System.out.println("No headsets detected.");
+			throw new CortexConnectionException("No headsets detected");
+		
 		this.headsetId = (String) ((JSONObject) ((JSONArray) this.getResponse().get("result")).get(0)).get("id");
 		System.out.println("Your headset ID is " + this.headsetId + ".");
 		boolean connected = !((String) ((JSONObject) ((JSONArray) this.getResponse().get("result")).get(0)).get("status"))
@@ -98,42 +108,54 @@ public class CortexHandler {
 		if (!connected) {
 			System.out.println("Connecting device...");
 			code = this.connectDevice();
-			while (code && this.client.loopWaited());
+			while (code && this.client.loopWaited()) Thread.sleep(1);
+			if (!code) throw new CortexConnectionException("Failed to connect device");
 		}
 
 		// Authorizing to generate Cortex token
 		System.out.println("Authorizing...");
 		this.authorize();
-		while (this.client.loopWaited());
+		while (this.client.loopWaited()) Thread.sleep(1);
 		this.token = (String) ((JSONObject) this.getResponse().get("result")).get("cortexToken");
 		System.out.println("Your token is " + this.token + ". Do not share this token!");
 
 		// Creating an open session
 		System.out.println("Creating open session...");
 		code = this.createOpenSession();
-		while (code && this.client.loopWaited());
+		while (code && this.client.loopWaited()) Thread.sleep(1);
+		if (!code) throw new CortexConnectionException("Failed to create open session");
 		this.session = new CortexSession((String) ((JSONObject) this.getResponse().get("result")).get("id"));
 
 		// Activating session
 		System.out.println("Updating session to active...");
 		code = this.updateActiveSession();
-		while (code && this.client.loopWaited());
+		while (code && this.client.loopWaited()) Thread.sleep(1);
+		if (!code) throw new CortexConnectionException("Failed to update session to active");
+		
+		open = true;
 
 		// Subscribe to metric data
 		System.out.println("Subscribing to metric data...");
 		JSONArray streams = new JSONArray();
 		streams.add("met");
 		code = this.subscribe(streams);
-		while (code && this.client.loopWaited());
+		while (code && this.client.loopWaited()) Thread.sleep(1);
+		if (!code) throw new CortexConnectionException("Failed to subscribe to metric data");
 
 	}
 	
-	public void open() throws InterruptedException {
+	public boolean open() throws InterruptedException {
+		if (open)
+			return false;
 		this.client.reconnect();
+		return true;
 	}
 	
-	public void close() throws InterruptedException {
+	public boolean close() throws InterruptedException {
+		if (!open)
+			return false;
 		this.client.closeBlocking();
+		return true;
 	}
 
 	public JSONObject getResponse() {

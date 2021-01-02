@@ -1,12 +1,15 @@
-name: FearPlugin
+name: CortexPlugin
 version: 1.0
 api-version: 1.16
 author: Junferno
-main: com.junferno.fear.FearPlugin
-description: Plugin for fear
+main: com.junferno.cortexplugin.CortexPlugin
+description: Cortex Plugin Brain-computer Interface integration for Minecraft with Cortex API
 
 commands:
   brainplayer:
     aliases: [bp]
-    description: Manually sets brain player
-    
+    description: Manually sets brain player for Cortex reference
+  open:
+    description: Reconnects WebSocket to Cortex API
+  close:
+    description: Disconnects WebSocket from Cortex API

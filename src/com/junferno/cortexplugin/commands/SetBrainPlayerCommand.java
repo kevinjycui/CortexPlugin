@@ -1,18 +1,15 @@
-package com.junferno.fear.commands;
+package com.junferno.cortexplugin.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.junferno.fear.FearPlugin;
+import com.junferno.cortexplugin.CortexPlugin;
 
 public class SetBrainPlayerCommand implements CommandExecutor {
-	
-	private FearPlugin plugin;
-	
-	public SetBrainPlayerCommand(FearPlugin plugin) {
-		this.plugin = plugin;
+		
+	public SetBrainPlayerCommand(CortexPlugin plugin) {
 		plugin.getCommand("brainplayer").setExecutor(this);
 	}
 
@@ -25,13 +22,18 @@ public class SetBrainPlayerCommand implements CommandExecutor {
 		
 		Player p = (Player) sender;
 		
-		if (args.length > 1) {
-			p.sendMessage("Invalid number of commands");
+		if (!p.hasPermission("cortexplugin.admin")) {
+			p.sendMessage("You do not have permission to execute this command!");
+			return false;
+		}
+		
+		else if (args.length > 1) {
+			p.sendMessage("Invalid number of arguments");
 			return false;
 		}
 		
 		else if (args.length == 0) {
-			if (FearPlugin.setBrainPlayer(p)) {
+			if (CortexPlugin.setBrainPlayer(p)) {
 				p.sendMessage("Brain player set to " + p.getDisplayName());
 				return true;
 			}
@@ -45,7 +47,7 @@ public class SetBrainPlayerCommand implements CommandExecutor {
 					p.sendMessage("Cannot set brain player to an offline player");
 					return false;
 				}
-				else if (FearPlugin.setBrainPlayer(player)) {
+				else if (CortexPlugin.setBrainPlayer(player)) {
 					p.sendMessage("Brain player set to " + player.getDisplayName());
 					return true;
 				}

@@ -1,4 +1,4 @@
-package com.junferno.fear.emotiv;
+package com.junferno.cortexplugin.emotiv;
 
 import java.io.FileReader;
 import java.io.IOException;

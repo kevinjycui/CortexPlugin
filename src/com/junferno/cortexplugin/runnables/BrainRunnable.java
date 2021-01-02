@@ -1,26 +1,19 @@
-package com.junferno.fear.runnables;
+package com.junferno.cortexplugin.runnables;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 
-import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_16_R3.entity.CraftLivingEntity;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.json.simple.JSONArray;
 
-import com.junferno.fear.FearPlugin;
-import com.junferno.fear.emotiv.CortexHandler;
-
-import net.minecraft.server.v1_16_R3.AttributeModifiable;
-import net.minecraft.server.v1_16_R3.AttributeModifier;
-import net.minecraft.server.v1_16_R3.EntityInsentient;
-import net.minecraft.server.v1_16_R3.GenericAttributes;
+import com.junferno.cortexplugin.CortexPlugin;
+import com.junferno.cortexplugin.emotiv.CortexHandler;
 
 class Metric {
 	protected HashMap<String, Double> metrics = new HashMap<String, Double>();
@@ -48,7 +41,7 @@ class Metric {
 		this.metricFullNames.put("foc", "Focus");
 
 		for (String metricName: metricNames.values())
-			this.metrics.put(metricName, 1D);
+			this.metrics.put(metricName, 0.5);
 	}
 
 	public double getMetric(String met) {
@@ -71,10 +64,10 @@ class Metric {
 	public boolean update(double time, JSONArray result) {
 		if (time == this.time)
 			return false;
-		
+
 		this.result = result;
 		this.time = time;
-		
+
 		this.putIfActive(0, 1);
 		this.putIfActive(2, 3);
 		this.putIfActive(2, 4);
@@ -82,16 +75,17 @@ class Metric {
 		this.putIfActive(7, 8);
 		this.putIfActive(9, 10);
 		this.putIfActive(11, 12);
-		
+
 		return true;
 	}
 }
 
 public class BrainRunnable extends BukkitRunnable {
 
-	private static final UUID movementSpeedUID = UUID.fromString("206a89dc-ae78-4c4d-b42c-3b31db3f5a7c");
 	protected CortexHandler cortex;
 	protected Metric metrics;
+	
+	private static final double RANGE = 50.0;
 
 	public BrainRunnable(CortexHandler cortex) {
 		super();
@@ -99,49 +93,47 @@ public class BrainRunnable extends BukkitRunnable {
 		this.metrics = new Metric();
 	}
 
-	public void modifySpeed(LivingEntity entity, double amount) {
-		EntityInsentient nmsEntity = (EntityInsentient) ((CraftLivingEntity) entity).getHandle();
-		AttributeModifiable attributes = nmsEntity.getAttributeInstance(GenericAttributes.MOVEMENT_SPEED);
-		AttributeModifier modifier = new AttributeModifier(
-				movementSpeedUID, 
-				"Brain plugin movement speed multiplier", 
-				amount, 
-				AttributeModifier.Operation.MULTIPLY_BASE
-				);
-		attributes.removeModifier(modifier);
-		attributes.addModifier(modifier);
+	public void modifyAttribute(AttributeInstance attribute, double amount) {
+		attribute.setBaseValue(Math.max(0.1, amount));
+	}
+
+	public void modifyAttributeByMetric(AttributeInstance attribute, double metric) {
+		modifyAttribute(attribute, attribute.getBaseValue() + metric - 0.5);
+	}
+
+	public void modifyAttributeBy2Metrics(AttributeInstance attribute, double metric1, double metric2) {
+		modifyAttribute(attribute, attribute.getBaseValue() + metric1 + metric2 - 1);
 	}
 
 	@Override
 	public void run(){
+		
+		Player p = CortexPlugin.getBrainPlayer();
 
-		if (FearPlugin.getBrainPlayer() == null || this.cortex.getResponse() == null)
+		if (p == null || this.cortex.getResponse() == null || !p.isOnline())
 			return;
 
-		if (!this.metrics.update(
-				(double) this.cortex.getResponse().get("time"), 
-				(JSONArray) this.cortex.getResponse().get("met")
-				))
+		if (!this.metrics.update((double) this.cortex.getResponse().get("time"), (JSONArray) this.cortex.getResponse().get("met")))
 			return;
 
-		Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
-		for (Player p:players) {
-			if (FearPlugin.isBrainPlayer(p)) {
-				for (String met: this.metrics.metrics.keySet())
-					p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
-				List<Entity> entities = p.getLocation().getWorld().getEntities();
-				for (Entity entity:entities)
-					if (
-							entity instanceof LivingEntity && (
-									entity.getType() == EntityType.ZOMBIE || 
-									entity.getType() == EntityType.SKELETON || 
-									entity.getType() == EntityType.CREEPER
-									)
-							) {
-						modifySpeed((LivingEntity) entity, this.metrics.getMetric("str") + this.metrics.getMetric("exc"));
-					}
+		modifyAttributeBy2Metrics(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), this.metrics.getMetric("exc"), this.metrics.getMetric("lex"));
+		modifyAttributeByMetric(p.getAttribute(Attribute.GENERIC_MAX_HEALTH), this.metrics.getMetric("rel"));
+		
+		for (String met: this.metrics.metrics.keySet())
+			p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
+		List<Entity> entities = p.getLocation().getWorld().getEntities();
+		for (Entity entity:entities)
+			if (entity.getLocation().distance(p.getLocation()) <= BrainRunnable.RANGE && entity instanceof Monster) {
+				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), 
+						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
+				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_FOLLOW_RANGE), 
+						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
+				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_ATTACK_DAMAGE), 
+						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
+				modifyAttributeByMetric(((LivingEntity) entity).getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE), 
+						this.metrics.getMetricInverse("foc"));
 			}
-		}
+
 	}
 
 }
