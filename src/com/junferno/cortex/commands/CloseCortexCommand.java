@@ -1,13 +1,17 @@
-package com.junferno.cortexplugin.commands;
+package com.junferno.cortex.commands;
 
 import org.bukkit.entity.Player;
 
-import com.junferno.cortexplugin.CortexPlugin;
+import com.junferno.cortex.CortexPlugin;
 
 public class CloseCortexCommand extends CortexCommand {
 	
 	public CloseCortexCommand(CortexPlugin plugin) {
 		plugin.getCommand("close").setExecutor(this);
+	}
+	
+	public boolean checkPerms(Player p) {
+		return p.hasPermission("cortex.connection.close");
 	}
 
 	public boolean execute(Player p) {

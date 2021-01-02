@@ -1,13 +1,13 @@
-package com.junferno.cortexplugin.commands;
+package com.junferno.cortex.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.junferno.cortexplugin.CortexPlugin;
-
 public abstract class CortexCommand implements CommandExecutor {
+	
+	public abstract boolean checkPerms(Player p);
 		
 	public abstract boolean execute(Player p);
 
@@ -20,7 +20,7 @@ public abstract class CortexCommand implements CommandExecutor {
 		
 		Player p = (Player) sender;
 		
-		if (!p.hasPermission("cortexplugin.admin")) {
+		if (!this.checkPerms(p)) {
 			p.sendMessage("You do not have permission to execute this command!");
 			return false;
 		}

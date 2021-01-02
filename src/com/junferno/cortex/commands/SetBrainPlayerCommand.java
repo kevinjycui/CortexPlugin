@@ -1,11 +1,11 @@
-package com.junferno.cortexplugin.commands;
+package com.junferno.cortex.commands;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.junferno.cortexplugin.CortexPlugin;
+import com.junferno.cortex.CortexPlugin;
 
 public class SetBrainPlayerCommand implements CommandExecutor {
 		
@@ -22,7 +22,7 @@ public class SetBrainPlayerCommand implements CommandExecutor {
 		
 		Player p = (Player) sender;
 		
-		if (!p.hasPermission("cortexplugin.admin")) {
+		if (!p.hasPermission("cortex.brainplayer")) {
 			p.sendMessage("You do not have permission to execute this command!");
 			return false;
 		}

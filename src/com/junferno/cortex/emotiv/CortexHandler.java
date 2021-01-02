@@ -1,10 +1,9 @@
-package com.junferno.cortexplugin.emotiv;
+package com.junferno.cortex.emotiv;
 
 import java.net.URI;
 import java.nio.file.Paths;
 import java.security.cert.X509Certificate;
 
-import javax.management.RuntimeErrorException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -14,6 +13,8 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 class CortexConnectionException extends Exception {
+	private static final long serialVersionUID = 5156286329359817868L;
+
 	public CortexConnectionException(String message) {
 		super(message);
 	}
@@ -44,7 +45,7 @@ public class CortexHandler {
 
 	public CortexHandler() {
 		try {
-			this.credentials = JSONHandler.readJSONFile(Paths.get("cortex", "credentials.json").toString());
+			this.credentials = JSONHandler.readJSONFile(Paths.get("plugins", "CortexPlugin", "credentials.json").toString());
 			this.client = new WebSocketEmotivClient(new URI(ENDPOINT));
 
 			// This trust manager trusts all hosts, not recommended for production
@@ -148,6 +149,7 @@ public class CortexHandler {
 		if (open)
 			return false;
 		this.client.reconnect();
+		open = true;
 		return true;
 	}
 	
@@ -155,6 +157,7 @@ public class CortexHandler {
 		if (!open)
 			return false;
 		this.client.closeBlocking();
+		open = false;
 		return true;
 	}
 
@@ -175,17 +178,14 @@ public class CortexHandler {
 		this.client.send(JSONHandler.encodeCortexRequest("getCortexInfo", null).toString());
 	}
 
-	@SuppressWarnings("unchecked")
 	public void requestAccess() throws InterruptedException {
 		this.requestWithCreds("requestAccess");
 	}
 
-	@SuppressWarnings("unchecked")
 	public void hasAccessRight() throws InterruptedException {
 		this.requestWithCreds("hasAccessRight");
 	}
 
-	@SuppressWarnings("unchecked")
 	public void authorize() throws InterruptedException {
 		this.requestWithCreds("authorize");
 	}

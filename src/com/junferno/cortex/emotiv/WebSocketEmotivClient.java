@@ -1,4 +1,4 @@
-package com.junferno.cortexplugin.emotiv;
+package com.junferno.cortex.emotiv;
 
 import java.net.URI;
 

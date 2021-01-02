@@ -1,13 +1,17 @@
-package com.junferno.cortexplugin.commands;
+package com.junferno.cortex.commands;
 
 import org.bukkit.entity.Player;
 
-import com.junferno.cortexplugin.CortexPlugin;
+import com.junferno.cortex.CortexPlugin;
 
 public class OpenCortexCommand extends CortexCommand {
 	
 	public OpenCortexCommand(CortexPlugin plugin) {
 		plugin.getCommand("open").setExecutor(this);
+	}
+	
+	public boolean checkPerms(Player p) {
+		return p.hasPermission("cortex.connection.open");
 	}
 
 	public boolean execute(Player p) {

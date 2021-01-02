@@ -1,4 +1,4 @@
-package com.junferno.cortexplugin.runnables;
+package com.junferno.cortex.runnables;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.json.simple.JSONArray;
 
-import com.junferno.cortexplugin.CortexPlugin;
-import com.junferno.cortexplugin.emotiv.CortexHandler;
+import com.junferno.cortex.CortexPlugin;
+import com.junferno.cortex.emotiv.CortexHandler;
 
 class Metric {
 	protected HashMap<String, Double> metrics = new HashMap<String, Double>();
@@ -94,36 +94,38 @@ public class BrainRunnable extends BukkitRunnable {
 	}
 
 	public void modifyAttribute(AttributeInstance attribute, double amount) {
-		attribute.setBaseValue(Math.max(0.1, amount));
+		attribute.setBaseValue(Math.max(0.01, amount));
 	}
-
-	public void modifyAttributeByMetric(AttributeInstance attribute, double metric) {
-		modifyAttribute(attribute, attribute.getBaseValue() + metric - 0.5);
+	
+	public void modifyAttributeByMetric(AttributeInstance attribute, double amount) {
+		attribute.setBaseValue(attribute.getBaseValue() * (amount + 0.75));
 	}
-
-	public void modifyAttributeBy2Metrics(AttributeInstance attribute, double metric1, double metric2) {
-		modifyAttribute(attribute, attribute.getBaseValue() + metric1 + metric2 - 1);
+	
+	public void modifyAttributeBy2Metrics(AttributeInstance attribute, double amount1, double amount2) {
+		attribute.setBaseValue(attribute.getBaseValue() * (amount1 + amount2 + 0.325));
 	}
 
 	@Override
 	public void run(){
 		
 		Player p = CortexPlugin.getBrainPlayer();
-
+		
 		if (p == null || this.cortex.getResponse() == null || !p.isOnline())
 			return;
 
 		if (!this.metrics.update((double) this.cortex.getResponse().get("time"), (JSONArray) this.cortex.getResponse().get("met")))
 			return;
+		
+		System.out.println(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue());
 
-		modifyAttributeBy2Metrics(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), this.metrics.getMetric("exc"), this.metrics.getMetric("lex"));
+		modifyAttributeBy2Metrics(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), this.metrics.getMetric("exc"), this.metrics.getMetric("foc"));
 		modifyAttributeByMetric(p.getAttribute(Attribute.GENERIC_MAX_HEALTH), this.metrics.getMetric("rel"));
 		
 		for (String met: this.metrics.metrics.keySet())
 			p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
 		List<Entity> entities = p.getLocation().getWorld().getEntities();
 		for (Entity entity:entities)
-			if (entity.getLocation().distance(p.getLocation()) <= BrainRunnable.RANGE && entity instanceof Monster) {
+			if (entity.getLocation().distance(p.getLocation()) <= RANGE && entity instanceof Monster) {
 				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), 
 						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
 				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_FOLLOW_RANGE), 

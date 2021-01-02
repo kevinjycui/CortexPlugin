@@ -2,7 +2,7 @@ name: CortexPlugin
 version: 1.0
 api-version: 1.16
 author: Junferno
-main: com.junferno.cortexplugin.CortexPlugin
+main: com.junferno.cortex.CortexPlugin
 description: Cortex Plugin Brain-computer Interface integration for Minecraft with Cortex API
 
 commands:

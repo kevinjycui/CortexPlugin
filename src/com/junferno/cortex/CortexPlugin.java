@@ -1,12 +1,12 @@
-package com.junferno.cortexplugin;
+package com.junferno.cortex;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.junferno.cortexplugin.commands.SetBrainPlayerCommand;
-import com.junferno.cortexplugin.emotiv.CortexHandler;
-import com.junferno.cortexplugin.listeners.SpawnListener;
-import com.junferno.cortexplugin.runnables.BrainRunnable;
+import com.junferno.cortex.commands.SetBrainPlayerCommand;
+import com.junferno.cortex.emotiv.CortexHandler;
+import com.junferno.cortex.listeners.SpawnListener;
+import com.junferno.cortex.runnables.BrainRunnable;
 
 public class CortexPlugin extends JavaPlugin {
 

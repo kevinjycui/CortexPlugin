@@ -1,4 +1,4 @@
-package com.junferno.cortexplugin.listeners;
+package com.junferno.cortex.listeners;
 
 import java.util.Collection;
 
@@ -8,7 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import com.junferno.cortexplugin.CortexPlugin;
+import com.junferno.cortex.CortexPlugin;
 
 public class SpawnListener implements Listener {
 
