@@ -249,8 +249,4 @@ public class CortexHandler {
 		return true;		
 	}
 
-	public static void main(String agrs[]) {
-		new CortexHandler();
-	}
-
 }
