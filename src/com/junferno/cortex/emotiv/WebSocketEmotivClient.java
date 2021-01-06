@@ -44,7 +44,6 @@ public class WebSocketEmotivClient extends WebSocketClient {
 	public void onMessage(String message) {
 		this.response = JSONHandler.decodeCortexResponse(message);
 		this.waiting = false;
-		System.out.println(this.response);
 	}
 
 	@Override
@@ -55,7 +54,6 @@ public class WebSocketEmotivClient extends WebSocketClient {
 	@Override
 	public void onError(Exception ex) {
 		ex.printStackTrace();
-
 	}
 
 }

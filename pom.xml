@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>CortexPlugin</groupId>
 	<artifactId>CortexPlugin</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1-RELEASE</version>
 	<name>Cortex Plugin</name>
 	<description>Cortex Plugin Brain-computer Interface integration for Minecraft with Cortex API</description>
 	<build>

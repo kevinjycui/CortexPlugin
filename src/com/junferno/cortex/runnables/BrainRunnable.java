@@ -44,7 +44,7 @@ class Metric {
 		this.metricFullNames.put("exc", "Excitement");
 		this.metricFullNames.put("lex", "Long-term Excitement");
 		this.metricFullNames.put("str", "Stress");
-		this.metricFullNames.put("rel", "Relax");
+		this.metricFullNames.put("rel", "Relaxation");
 		this.metricFullNames.put("int", "Interest");
 		this.metricFullNames.put("foc", "Focus");
 
@@ -61,7 +61,7 @@ class Metric {
 	}
 
 	public String getMetricMessage(String user, String met) {
-		return user + ": " + this.metricFullNames.get(met) + " at " + this.getMetric(met);
+		return user + ": " + this.metricFullNames.get(met) + " at " + ((int) (this.getMetric(met) * 100)) + "%";
 	}
 
 	public void putIfActive(int activeIndex, int metricIndex) {
@@ -138,6 +138,9 @@ public class BrainRunnable extends BukkitRunnable {
 
 		if (!this.metrics.update((double) this.cortex.getResponse().get("time"), (JSONArray) this.cortex.getResponse().get("met")))
 			return;
+		
+		for (String met: this.metrics.metrics.keySet())
+			p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
 
 		modifyAttribute(p, GenericAttributes.MOVEMENT_SPEED, // Movement speed changes with excitement
 				AttributeModifier.Operation.MULTIPLY_TOTAL, 
@@ -164,8 +167,6 @@ public class BrainRunnable extends BukkitRunnable {
 				attackKnockbackUUID, 
 				this.metrics.getMetric("foc"));
 		
-		for (String met: this.metrics.metrics.keySet())
-			p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
 		List<Entity> entities = p.getLocation().getWorld().getEntities();
 		for (Entity entity:entities)
 			if (entity.getLocation().distance(p.getLocation()) <= RANGE && entity instanceof Monster) {
@@ -179,6 +180,11 @@ public class BrainRunnable extends BukkitRunnable {
 						AttributeModifier.Operation.MULTIPLY_TOTAL, 
 						followRangeUUID, 
 						this.metrics.getMetric("str"));
+				modifyAttribute((Monster) entity, 
+						GenericAttributes.ATTACK_DAMAGE, // Monster follow range changes with stress
+						AttributeModifier.Operation.MULTIPLY_TOTAL, 
+						followRangeUUID, 
+						this.metrics.getMetric("eng"));
 			}
 
 	}
