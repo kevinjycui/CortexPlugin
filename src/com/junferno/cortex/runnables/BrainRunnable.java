@@ -2,9 +2,10 @@ package com.junferno.cortex.runnables;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.attribute.Attribute;
-import org.bukkit.attribute.AttributeInstance;
+import org.bukkit.craftbukkit.v1_16_R3.entity.CraftLivingEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
@@ -14,6 +15,13 @@ import org.json.simple.JSONArray;
 
 import com.junferno.cortex.CortexPlugin;
 import com.junferno.cortex.emotiv.CortexHandler;
+
+import net.minecraft.server.v1_16_R3.AttributeBase;
+import net.minecraft.server.v1_16_R3.AttributeModifiable;
+import net.minecraft.server.v1_16_R3.AttributeModifier;
+import net.minecraft.server.v1_16_R3.AttributeModifier.Operation;
+import net.minecraft.server.v1_16_R3.EntityLiving;
+import net.minecraft.server.v1_16_R3.GenericAttributes;
 
 class Metric {
 	protected HashMap<String, Double> metrics = new HashMap<String, Double>();
@@ -86,23 +94,38 @@ public class BrainRunnable extends BukkitRunnable {
 	protected Metric metrics;
 	
 	private static final double RANGE = 50.0;
+	
+	private static final double DFACTOR = 1;
+	private static final double TFACTOR = 0.5;
+	
+	UUID movementSpeedUUID = UUID.fromString("a1d86ac4-c932-4f68-926b-6258d34aa591");
+	UUID jumpStrengthUUID = UUID.fromString("f6fdd295-bd04-49c7-89b4-c992069934bd");
+	UUID knockbackResistanceUUID = UUID.fromString("de1a690c-fb28-4452-9749-42d6f88bff17");
+	UUID attackDamageUUID = UUID.fromString("5a8b5e4a-fceb-45ca-ac12-273798a9a19c");
+	UUID attackKnockbackUUID = UUID.fromString("00eb654e-11bb-4ce2-acea-f36abdcefeb7");
+	UUID followRangeUUID = UUID.fromString("95ff1f89-7b4f-4ac3-a7e7-1082c93c658f");
 
 	public BrainRunnable(CortexHandler cortex) {
 		super();
 		this.cortex = cortex;
 		this.metrics = new Metric();
 	}
-
-	public void modifyAttribute(AttributeInstance attribute, double amount) {
-		attribute.setBaseValue(Math.max(0.01, amount));
-	}
 	
-	public void modifyAttributeByMetric(AttributeInstance attribute, double amount) {
-		attribute.setBaseValue(attribute.getBaseValue() * (amount + 0.75));
-	}
-	
-	public void modifyAttributeBy2Metrics(AttributeInstance attribute, double amount1, double amount2) {
-		attribute.setBaseValue(attribute.getBaseValue() * (amount1 + amount2 + 0.325));
+	public void modifyAttribute(LivingEntity entity, AttributeBase attribute, Operation operation, UUID uuid, double amount) {
+		EntityLiving nmsEntity = (EntityLiving) ((CraftLivingEntity) entity).getHandle();
+		AttributeModifiable attributes = nmsEntity.getAttributeInstance(attribute);
+		if (attributes == null) {
+			System.out.println("Entity " + entity.getName() + " does not have attribute " + attribute.getName());
+			return;
+		}
+		AttributeModifier modifier = new AttributeModifier(
+				uuid,
+				"Brain plugin movement speed multiplier", 
+				1/(DFACTOR * (amount + TFACTOR)), 
+				operation
+				);
+		attributes.removeModifier(modifier);
+		attributes.addModifier(modifier);
 	}
 
 	@Override
@@ -118,22 +141,50 @@ public class BrainRunnable extends BukkitRunnable {
 		
 		System.out.println(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue());
 
-		modifyAttributeBy2Metrics(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), this.metrics.getMetric("exc"), this.metrics.getMetric("foc"));
-		modifyAttributeByMetric(p.getAttribute(Attribute.GENERIC_MAX_HEALTH), this.metrics.getMetric("rel"));
+		modifyAttribute(p, GenericAttributes.MOVEMENT_SPEED, // Movement speed changes with excitement
+				AttributeModifier.Operation.MULTIPLY_BASE, 
+				movementSpeedUUID, 
+				this.metrics.getMetric("exc"));
+		
+		System.out.println(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue());
+		
+		System.out.println("=================");
+
+		modifyAttribute(p, GenericAttributes.KNOCKBACK_RESISTANCE, // Knockback resistance changes with inverse of relaxation
+				AttributeModifier.Operation.MULTIPLY_BASE, 
+				knockbackResistanceUUID, 
+				this.metrics.getMetricInverse("rel"));
+
+		modifyAttribute(p, GenericAttributes.MAX_HEALTH, // Attack damage changes with focus
+				AttributeModifier.Operation.MULTIPLY_BASE, 
+				attackKnockbackUUID, 
+				this.metrics.getMetric("rel"));
+
+		modifyAttribute(p, GenericAttributes.ATTACK_DAMAGE, // Attack damage changes with focus
+				AttributeModifier.Operation.MULTIPLY_BASE, 
+				attackDamageUUID, 
+				this.metrics.getMetric("foc"));
+
+		modifyAttribute(p, GenericAttributes.ATTACK_SPEED, // Attack damage changes with focus
+				AttributeModifier.Operation.MULTIPLY_BASE, 
+				attackKnockbackUUID, 
+				this.metrics.getMetric("foc"));
 		
 		for (String met: this.metrics.metrics.keySet())
 			p.sendMessage(this.metrics.getMetricMessage(p.getDisplayName(), met));
 		List<Entity> entities = p.getLocation().getWorld().getEntities();
 		for (Entity entity:entities)
 			if (entity.getLocation().distance(p.getLocation()) <= RANGE && entity instanceof Monster) {
-				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_MOVEMENT_SPEED), 
-						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
-				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_FOLLOW_RANGE), 
-						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
-				modifyAttributeBy2Metrics(((LivingEntity) entity).getAttribute(Attribute.GENERIC_ATTACK_DAMAGE), 
-						this.metrics.getMetric("str"), this.metrics.getMetricInverse("rel"));
-				modifyAttributeByMetric(((LivingEntity) entity).getAttribute(Attribute.GENERIC_KNOCKBACK_RESISTANCE), 
-						this.metrics.getMetricInverse("foc"));
+				modifyAttribute((Monster) entity, 
+						GenericAttributes.MOVEMENT_SPEED, // Monster movement speed changes with stress
+						AttributeModifier.Operation.MULTIPLY_BASE, 
+						movementSpeedUUID, 
+						this.metrics.getMetric("str"));
+				modifyAttribute((Monster) entity, 
+						GenericAttributes.FOLLOW_RANGE, // Monster follow range changes with stress
+						AttributeModifier.Operation.MULTIPLY_BASE, 
+						followRangeUUID, 
+						this.metrics.getMetric("str"));
 			}
 
 	}
