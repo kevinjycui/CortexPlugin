@@ -95,8 +95,8 @@ public class BrainRunnable extends BukkitRunnable {
 	
 	private static final double RANGE = 50.0;
 	
-	private static final double DFACTOR = 1;
-	private static final double TFACTOR = 0.5;
+	private static final double DFACTOR = 1.0; // Dampening factor, recommended value 1.0
+	private static final double TFACTOR = -0.5; // Translational factor, recommended value -0.5
 	
 	UUID movementSpeedUUID = UUID.fromString("a1d86ac4-c932-4f68-926b-6258d34aa591");
 	UUID jumpStrengthUUID = UUID.fromString("f6fdd295-bd04-49c7-89b4-c992069934bd");
@@ -121,7 +121,7 @@ public class BrainRunnable extends BukkitRunnable {
 		AttributeModifier modifier = new AttributeModifier(
 				uuid,
 				"Brain plugin movement speed multiplier", 
-				1/(DFACTOR * (amount + TFACTOR)), 
+				DFACTOR * (amount + TFACTOR), 
 				operation
 				);
 		attributes.removeModifier(modifier);
@@ -138,35 +138,29 @@ public class BrainRunnable extends BukkitRunnable {
 
 		if (!this.metrics.update((double) this.cortex.getResponse().get("time"), (JSONArray) this.cortex.getResponse().get("met")))
 			return;
-		
-		System.out.println(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue());
 
 		modifyAttribute(p, GenericAttributes.MOVEMENT_SPEED, // Movement speed changes with excitement
-				AttributeModifier.Operation.MULTIPLY_BASE, 
+				AttributeModifier.Operation.MULTIPLY_TOTAL, 
 				movementSpeedUUID, 
 				this.metrics.getMetric("exc"));
-		
-		System.out.println(p.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED).getValue());
-		
-		System.out.println("=================");
 
 		modifyAttribute(p, GenericAttributes.KNOCKBACK_RESISTANCE, // Knockback resistance changes with inverse of relaxation
-				AttributeModifier.Operation.MULTIPLY_BASE, 
+				AttributeModifier.Operation.MULTIPLY_TOTAL, 
 				knockbackResistanceUUID, 
 				this.metrics.getMetricInverse("rel"));
 
 		modifyAttribute(p, GenericAttributes.MAX_HEALTH, // Attack damage changes with focus
-				AttributeModifier.Operation.MULTIPLY_BASE, 
+				AttributeModifier.Operation.MULTIPLY_TOTAL, 
 				attackKnockbackUUID, 
 				this.metrics.getMetric("rel"));
 
 		modifyAttribute(p, GenericAttributes.ATTACK_DAMAGE, // Attack damage changes with focus
-				AttributeModifier.Operation.MULTIPLY_BASE, 
+				AttributeModifier.Operation.MULTIPLY_TOTAL, 
 				attackDamageUUID, 
 				this.metrics.getMetric("foc"));
 
 		modifyAttribute(p, GenericAttributes.ATTACK_SPEED, // Attack damage changes with focus
-				AttributeModifier.Operation.MULTIPLY_BASE, 
+				AttributeModifier.Operation.MULTIPLY_TOTAL, 
 				attackKnockbackUUID, 
 				this.metrics.getMetric("foc"));
 		
@@ -177,12 +171,12 @@ public class BrainRunnable extends BukkitRunnable {
 			if (entity.getLocation().distance(p.getLocation()) <= RANGE && entity instanceof Monster) {
 				modifyAttribute((Monster) entity, 
 						GenericAttributes.MOVEMENT_SPEED, // Monster movement speed changes with stress
-						AttributeModifier.Operation.MULTIPLY_BASE, 
+						AttributeModifier.Operation.MULTIPLY_TOTAL, 
 						movementSpeedUUID, 
 						this.metrics.getMetric("str"));
 				modifyAttribute((Monster) entity, 
 						GenericAttributes.FOLLOW_RANGE, // Monster follow range changes with stress
-						AttributeModifier.Operation.MULTIPLY_BASE, 
+						AttributeModifier.Operation.MULTIPLY_TOTAL, 
 						followRangeUUID, 
 						this.metrics.getMetric("str"));
 			}
