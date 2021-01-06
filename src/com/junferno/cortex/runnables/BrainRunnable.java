@@ -181,7 +181,7 @@ public class BrainRunnable extends BukkitRunnable {
 						followRangeUUID, 
 						this.metrics.getMetric("str"));
 				modifyAttribute((Monster) entity, 
-						GenericAttributes.ATTACK_DAMAGE, // Monster follow range changes with stress
+						GenericAttributes.ATTACK_DAMAGE, // Monster attack damage changes with engagement
 						AttributeModifier.Operation.MULTIPLY_TOTAL, 
 						followRangeUUID, 
 						this.metrics.getMetric("eng"));
