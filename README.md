@@ -26,9 +26,11 @@ Cortex API plugin for Minecraft. Uses Emotiv's Cortex API to make in-game adjust
 ### Requirements
  * Emotiv Headgear (Plugin tested with [INSIGHT](https://www.emotiv.com/insight/))
  * Emoiv App ([Emotiv Installer](https://www.emotiv.com/my-account/downloads/))
+ * Java 15.X (Plugin tested with Java 15.0.1, [Download Page](https://java.com/en/download/))
+ * Apache Maven 3.X (Plugin tested with Apache Maven 3.6.3, [Download Page](https://maven.apache.org/download.cgi))
  * Spigot Server ([Tutorial](https://minecraft.gamepedia.com/Tutorials/Setting_up_a_Spigot_server))
 
-Download the latest stable release of `CortexPlugin.jar` to your `plugins` directory of your server. Add another directory `plugins/CortexPlugin` and create a file `plugins/cortex/credentials.json` containing the following (retrieved from your [cortex account](https://www.emotiv.com/my-account/cortex-apps/)):
+Download the [latest stable release](https://github.com/kevinjycui/CortexPlugin/releases) to your `plugins` directory of your server. Rename this file to `CortexPlugin.jar`. Add another directory `plugins/CortexPlugin` and create a file `plugins/CortexPlugin/credentials.json` containing the following (retrieved from your [cortex account](https://www.emotiv.com/my-account/cortex-apps/)):
 
 ```json
 {
@@ -41,8 +43,8 @@ Your server directory should look like the following
 .
 ├── plugins
 │   ├── CortexPlugin
-│   │   ├── credentials.json
-│   └── CortexPlugin.jar
+│   │   └── credentials.json
+│   ├── CortexPlugin.jar
 │   └── ...
 └── ...
 ```
